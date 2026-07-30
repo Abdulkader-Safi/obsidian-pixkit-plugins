@@ -144,6 +144,15 @@ export class ImageMagickSettingTab extends PluginSettingTab {
 				},
 			},
 			{
+				name: 'Scale percentage',
+				desc: 'Resize to a percentage of the original dimensions. Empty keeps source size.',
+				control: {
+					type: 'text',
+					key: keyFor(index, 'scalePercent'),
+					placeholder: '50',
+				},
+			},
+			{
 				name: 'Strip metadata',
 				desc: 'Drop camera, location, and colour profile data.',
 				control: {
@@ -210,6 +219,11 @@ export class ImageMagickSettingTab extends PluginSettingTab {
 				? ''
 				: String(preset.maxLongEdge);
 		}
+		if (parsed.field === 'scalePercent') {
+			return preset.scalePercent === null
+				? ''
+				: String(preset.scalePercent);
+		}
 		return preset[parsed.field];
 	}
 
@@ -235,6 +249,15 @@ export class ImageMagickSettingTab extends PluginSettingTab {
 				const text = String(value).trim();
 				const n = Number(text);
 				preset.maxLongEdge =
+					text !== '' && Number.isFinite(n) && n > 0
+						? Math.round(n)
+						: null;
+				break;
+			}
+			case 'scalePercent': {
+				const text = String(value).trim();
+				const n = Number(text);
+				preset.scalePercent =
 					text !== '' && Number.isFinite(n) && n > 0
 						? Math.round(n)
 						: null;

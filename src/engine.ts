@@ -56,6 +56,8 @@ export interface OptimizePreset {
 	format: ImageFormat;
 	/** Downscale the longest edge to this. null keeps the source size. Never upscales. */
 	maxLongEdge: number | null;
+	/** Resize to a percentage of the original dimensions. null disables. */
+	scalePercent: number | null;
 	/** Drop EXIF, GPS, and colour profiles before encoding. */
 	stripMetadata: boolean;
 	output: 'suffix' | 'overwrite';
@@ -182,7 +184,14 @@ export async function encodePreset(
 	preset: OptimizePreset,
 ): Promise<Uint8Array> {
 	let chain = SImg.fromBuffer(bytes);
-	if (preset.maxLongEdge) {
+	if (preset.scalePercent) {
+		const { width, height } = probe(bytes);
+		chain = chain.resize({
+			width: Math.max(1, Math.round(width * preset.scalePercent / 100)),
+			height: Math.max(1, Math.round(height * preset.scalePercent / 100)),
+			fit: 'fill',
+		});
+	} else if (preset.maxLongEdge) {
 		// Shrink-only, aspect preserved: ImageMagick's `>`.
 		chain = chain.maxLongEdge(preset.maxLongEdge);
 	}

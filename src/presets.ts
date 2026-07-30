@@ -19,6 +19,7 @@ export const NEW_PRESET: OptimizePreset = {
 	format: 'webp',
 	quality: 80,
 	maxLongEdge: null,
+	scalePercent: null,
 	stripMetadata: true,
 	output: 'suffix',
 	suffix: '.optimized',
@@ -30,6 +31,7 @@ export const DEFAULT_PRESETS: OptimizePreset[] = [
 		format: 'webp',
 		quality: 80,
 		maxLongEdge: 1600,
+		scalePercent: null,
 		stripMetadata: true,
 		output: 'suffix',
 		suffix: '.optimized',
@@ -39,6 +41,7 @@ export const DEFAULT_PRESETS: OptimizePreset[] = [
 		format: 'jpg',
 		quality: 75,
 		maxLongEdge: null,
+		scalePercent: null,
 		stripMetadata: true,
 		output: 'suffix',
 		suffix: '.optimized',
@@ -48,6 +51,7 @@ export const DEFAULT_PRESETS: OptimizePreset[] = [
 		format: 'webp',
 		quality: 90,
 		maxLongEdge: null,
+		scalePercent: null,
 		stripMetadata: true,
 		output: 'suffix',
 		suffix: '.optimized',
@@ -72,6 +76,12 @@ function toPreset(raw: unknown): OptimizePreset | null {
 		r.maxLongEdge > 0
 			? Math.round(r.maxLongEdge)
 			: null;
+	const scalePercent =
+		typeof r.scalePercent === 'number' &&
+		Number.isFinite(r.scalePercent) &&
+		r.scalePercent > 0
+			? Math.round(r.scalePercent)
+			: null;
 	const suffix =
 		typeof r.suffix === 'string' && r.suffix !== '' ? r.suffix : '.optimized';
 	return {
@@ -79,6 +89,7 @@ function toPreset(raw: unknown): OptimizePreset | null {
 		format: r.format as ImageFormat,
 		quality: clampQuality(r.quality),
 		maxLongEdge,
+		scalePercent,
 		stripMetadata: r.stripMetadata === true,
 		output: r.output === 'overwrite' ? 'overwrite' : 'suffix',
 		suffix,
@@ -102,7 +113,9 @@ export function resolvePresets(raw: unknown): OptimizePreset[] {
 /** One-line summary shown next to a preset's name in the picker. */
 export function describePreset(p: OptimizePreset): string {
 	const parts: string[] = [p.format];
-	if (p.maxLongEdge) {
+	if (p.scalePercent) {
+		parts.push(`${p.scalePercent}%`);
+	} else if (p.maxLongEdge) {
 		parts.push(`max ${p.maxLongEdge}px`);
 	}
 	if (!LOSSLESS_FORMATS.has(p.format)) {
