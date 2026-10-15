@@ -2,7 +2,7 @@
 
 Optimize images inside your vault. Resize, crop, rotate, compress and convert formats, without leaving Obsidian and without uploading anything anywhere.
 
-Powered by [safi-image](https://github.com/Abdulkader-Safi/safi-image), a TypeScript image library written for this plugin. No native binaries, and nothing is fetched at runtime: every codec ships inside `main.js`, and no image ever leaves your machine. Every format is decoded in plain TypeScript except WebP, which uses a small WebAssembly codec, inlined rather than downloaded. This is the Obsidian port of the [VS Code extension](https://github.com/Abdulkader-Safi/vscode-extensions-ImageMagick).
+Powered by [safi-image](https://github.com/Abdulkader-Safi/safi-image), a TypeScript image library written for this plugin. No native binaries, and nothing is fetched at runtime: every codec ships inside `main.js`, and no image ever leaves your machine. Every format is decoded in plain TypeScript except WebP, which uses a small WebAssembly codec, inlined rather than downloaded. This is the Obsidian port of the [VS Code extension](https://github.com/Abdulkader-Safi/vscode-extensions-pixkit).
 
 By [Abdulkader Safi](https://abdulkadersafi.com).
 
