@@ -1,6 +1,6 @@
 {
 	"name": "pixkit",
-	"version": "2.3.0",
+	"version": "3.0.0",
 	"description": "Resize, crop, rotate, compress and convert images inside Obsidian.",
 	"author": "Abdulkader Safi <safi.abdulkader@gmail.com> (https://abdulkadersafi.com)",
 	"repository": {
