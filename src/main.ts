@@ -279,23 +279,12 @@ export default class PixkitPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		const data = ((await this.loadData()) ??
-			(await this.loadLegacyData())) as Partial<PixkitSettings> | null;
+		const data = (await this.loadData()) as Partial<PixkitSettings> | null;
 		this.settings = {
 			presets: parsePresets(data?.presets),
 			updateAllNotes: data?.updateAllNotes === true,
 			trashOriginal: data?.trashOriginal === true,
 		};
-	}
-
-	/** Settings saved before the plugin was renamed from id `image-magick`. */
-	private async loadLegacyData(): Promise<unknown> {
-		const path = `${this.app.vault.configDir}/plugins/image-magick/data.json`;
-		try {
-			return JSON.parse(await this.app.vault.adapter.read(path)) as unknown;
-		} catch {
-			return null;
-		}
 	}
 
 	async saveSettings() {
