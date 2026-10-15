@@ -4,6 +4,7 @@ import type { OptimizePreset } from './engine';
 import { parsePresets, presetOutputPath, resolvePresets } from './presets';
 import { ImagePickerModal, PresetPickerModal } from './modals';
 import { ImageMagickSettingTab } from './settings';
+import { embeddedImageAt } from './embed-menu';
 import { isImageFile, readBytes, writeBytes } from './vault';
 import { EDITOR_VIEW_TYPE, EditorView } from './ui/EditorView';
 
@@ -56,6 +57,19 @@ export default class ImageMagickPlugin extends Plugin {
 				this.addMenuItems(menu, this.imagesIn(files));
 			}),
 		);
+
+		this.registerDomEvent(document, 'contextmenu', (evt) => {
+			// A prevented event already has a menu (live preview), which got our
+			// items through file-menu above.
+			const image = evt.defaultPrevented ? null : embeddedImageAt(this.app, evt);
+			if (!image) {
+				return;
+			}
+			evt.preventDefault();
+			const menu = new Menu();
+			this.addMenuItems(menu, [image]);
+			menu.showAtMouseEvent(evt);
+		});
 
 		this.addSettingTab(new ImageMagickSettingTab(this.app, this));
 	}
