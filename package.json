@@ -1,6 +1,6 @@
 {
 	"name": "image-magick",
-	"version": "2.2.0",
+	"version": "2.3.0",
 	"description": "Resize, crop, rotate, compress and convert images inside Obsidian.",
 	"author": "Abdulkader Safi <safi.abdulkader@gmail.com> (https://abdulkadersafi.com)",
 	"repository": {
