@@ -20,7 +20,7 @@ npm test        # runs real images through the edit pipeline
 npm run lint
 ```
 
-To try your build, point the repo at a real vault: clone it into `<vault>/.obsidian/plugins/image-magick/`, run `npm run dev`, and reload Obsidian. The plugin needs `main.js`, `manifest.json` and `styles.css` in that folder.
+To try your build, point the repo at a real vault: clone it into `<vault>/.obsidian/plugins/pixkit/`, run `npm run dev`, and reload Obsidian. The plugin needs `main.js`, `manifest.json` and `styles.css` in that folder.
 
 ## Before you open a pull request
 

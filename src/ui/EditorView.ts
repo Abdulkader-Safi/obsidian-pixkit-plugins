@@ -1,9 +1,9 @@
 import { ItemView, TFile, WorkspaceLeaf } from 'obsidian';
 import { mount, unmount } from 'svelte';
 import Editor from './Editor.svelte';
-import type ImageMagickPlugin from '../main';
+import type PixkitPlugin from '../main';
 
-export const EDITOR_VIEW_TYPE = 'imagemagick-editor';
+export const EDITOR_VIEW_TYPE = 'pixkit-editor';
 
 export class EditorView extends ItemView {
 	private component: ReturnType<typeof mount> | undefined;
@@ -13,7 +13,7 @@ export class EditorView extends ItemView {
 
 	constructor(
 		leaf: WorkspaceLeaf,
-		private plugin: ImageMagickPlugin,
+		private plugin: PixkitPlugin,
 	) {
 		super(leaf);
 	}
@@ -23,7 +23,7 @@ export class EditorView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return this.files[0]?.name ?? 'ImageMagick';
+		return this.files[0]?.name ?? 'Pixkit';
 	}
 
 	getIcon(): string {

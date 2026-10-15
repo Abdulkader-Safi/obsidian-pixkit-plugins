@@ -1,7 +1,7 @@
 import type { Format } from 'safi-image';
 
 /**
- * AVIF and HEIC are gone with ImageMagick: both are patent-encumbered codecs
+ * AVIF and HEIC were dropped in 2.0: both are patent-encumbered codecs
  * that safi-image does not carry, and no pure-TypeScript decoder for them is
  * worth 7 MB of wasm. Everything else the plugin ever offered survives.
  */

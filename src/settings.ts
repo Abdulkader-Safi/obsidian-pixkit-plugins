@@ -8,7 +8,7 @@ import { DEFAULT_PRESETS, NEW_PRESET, describePreset } from './presets';
 import { LOSSLESS_FORMATS } from './formats';
 import type { ImageFormat } from './formats';
 import type { OptimizePreset } from './engine';
-import type ImageMagickPlugin from './main';
+import type PixkitPlugin from './main';
 
 /**
  * Keyed by ImageFormat rather than string, so a format leaving the union is a
@@ -58,10 +58,10 @@ function parseKey(key: string): { index: number; field: Field } | null {
 	return { index, field: key.slice(dot + 1) as Field };
 }
 
-export class ImageMagickSettingTab extends PluginSettingTab {
+export class PixkitSettingTab extends PluginSettingTab {
 	constructor(
 		app: App,
-		private plugin: ImageMagickPlugin,
+		private plugin: PixkitPlugin,
 	) {
 		super(app, plugin);
 	}

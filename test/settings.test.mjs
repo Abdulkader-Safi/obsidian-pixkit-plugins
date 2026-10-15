@@ -19,7 +19,7 @@ import path from 'node:path';
 import { test, before, beforeEach } from 'node:test';
 import esbuild from 'esbuild';
 
-let ImageMagickSettingTab;
+let PixkitSettingTab;
 let tab;
 let plugin;
 
@@ -37,7 +37,7 @@ before(async () => {
 		outfile,
 		logLevel: 'silent',
 	});
-	({ ImageMagickSettingTab } = await import(outfile));
+	({ PixkitSettingTab } = await import(outfile));
 });
 
 beforeEach(() => {
@@ -62,7 +62,7 @@ beforeEach(() => {
 			this.saves++;
 		},
 	};
-	tab = new ImageMagickSettingTab({}, plugin);
+	tab = new PixkitSettingTab({}, plugin);
 });
 
 /** Every control definition the tab emits, flattened out of its groups. */

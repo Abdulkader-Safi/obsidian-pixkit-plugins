@@ -1,6 +1,6 @@
 {
-	"id": "image-magick",
-	"name": "ImageMagick",
+	"id": "pixkit",
+	"name": "Pixkit",
 	"version": "2.3.0",
 	"minAppVersion": "1.13.0",
 	"description": "Resize, crop, rotate, compress and convert images in your vault.",

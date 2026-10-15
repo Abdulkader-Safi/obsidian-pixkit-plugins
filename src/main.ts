@@ -12,13 +12,13 @@ import { encodePreset } from './engine';
 import type { OptimizePreset } from './engine';
 import { parsePresets, presetOutputPath, resolvePresets } from './presets';
 import { ImagePickerModal, PresetPickerModal } from './modals';
-import { ImageMagickSettingTab } from './settings';
+import { PixkitSettingTab } from './settings';
 import { embeddedImageAt, imagesInNote } from './embed-menu';
 import { describeSwaps, notesLinking, replaceLinks, type SwapResult } from './relink';
 import { isImageFile, readBytes, writeBytes } from './vault';
 import { EDITOR_VIEW_TYPE, EditorView } from './ui/EditorView';
 
-export interface ImageMagickSettings {
+export interface PixkitSettings {
 	/** Empty means the three built-in presets are offered instead. */
 	presets: OptimizePreset[];
 	/** Optimizing from the file explorer also points every note at the new file. */
@@ -27,14 +27,14 @@ export interface ImageMagickSettings {
 	trashOriginal: boolean;
 }
 
-export const DEFAULT_SETTINGS: ImageMagickSettings = {
+export const DEFAULT_SETTINGS: PixkitSettings = {
 	presets: [],
 	updateAllNotes: false,
 	trashOriginal: false,
 };
 
-export default class ImageMagickPlugin extends Plugin {
-	settings: ImageMagickSettings = DEFAULT_SETTINGS;
+export default class PixkitPlugin extends Plugin {
+	settings: PixkitSettings = DEFAULT_SETTINGS;
 
 	async onload() {
 		await this.loadSettings();
@@ -117,7 +117,7 @@ export default class ImageMagickPlugin extends Plugin {
 			menu.showAtMouseEvent(evt);
 		});
 
-		this.addSettingTab(new ImageMagickSettingTab(this.app, this));
+		this.addSettingTab(new PixkitSettingTab(this.app, this));
 	}
 
 	/** The presets to offer: the user's saved ones, or the built-in defaults. */
@@ -190,7 +190,7 @@ export default class ImageMagickPlugin extends Plugin {
 					swaps.push(await this.swapLinks(note, file, written));
 				} catch (err) {
 					failed++;
-					console.error(`[ImageMagick] failed on ${file.path}`, err);
+					console.error(`[Pixkit] failed on ${file.path}`, err);
 				}
 			}
 		} finally {
@@ -279,12 +279,23 @@ export default class ImageMagickPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		const data = (await this.loadData()) as Partial<ImageMagickSettings> | null;
+		const data = ((await this.loadData()) ??
+			(await this.loadLegacyData())) as Partial<PixkitSettings> | null;
 		this.settings = {
 			presets: parsePresets(data?.presets),
 			updateAllNotes: data?.updateAllNotes === true,
 			trashOriginal: data?.trashOriginal === true,
 		};
+	}
+
+	/** Settings saved before the plugin was renamed from id `image-magick`. */
+	private async loadLegacyData(): Promise<unknown> {
+		const path = `${this.app.vault.configDir}/plugins/image-magick/data.json`;
+		try {
+			return JSON.parse(await this.app.vault.adapter.read(path)) as unknown;
+		} catch {
+			return null;
+		}
 	}
 
 	async saveSettings() {

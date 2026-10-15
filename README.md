@@ -1,4 +1,4 @@
-# ImageMagick for Obsidian
+# Pixkit for Obsidian
 
 Optimize images inside your vault. Resize, crop, rotate, compress and convert formats, without leaving Obsidian and without uploading anything anywhere.
 
@@ -24,7 +24,7 @@ By [Abdulkader Safi](https://abdulkadersafi.com).
 
 1. **From the file explorer**: right-click an image, a selection of images, or a folder (every image inside it, subfolders included), then **Optimize image** or **Optimize with preset**.
 2. **From a note**: right-click an embedded image, in live preview or reading view. Saving swaps the new file into the note. To do every image in a note at once, open the note's menu (right-click it in the file explorer, or its tab) and pick **Optimize image** or **Optimize with preset**.
-3. **From the command palette**: **ImageMagick: Open image** and **Optimize with preset** use the image open in the current tab, or let you pick one. **Optimize images in current note** and **Optimize images in current note with preset** cover every image the open note embeds.
+3. **From the command palette**: **Pixkit: Open image** and **Optimize with preset** use the image open in the current tab, or let you pick one. **Optimize images in current note** and **Optimize images in current note with preset** cover every image the open note embeds.
 4. **Drag and drop**: open the view, then drag an image in from outside Obsidian.
 
 ### Keeping notes in sync

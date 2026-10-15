@@ -77,7 +77,7 @@ test('parsePresets drops junk, resolvePresets falls back to the built-ins', () =
 		mod.parsePresets([{ name: 'a', format: 'webp', quality: 500 }])[0].quality,
 		100,
 	);
-	// AVIF went with ImageMagick: a preset saved by an older version is dropped
+	// AVIF was dropped in 2.0: a preset saved by an older version is dropped
 	// rather than kept as an option that could only fail at save time.
 	assert.deepEqual(mod.parsePresets([{ name: 'old', format: 'avif' }]), []);
 	assert.equal(mod.resolvePresets([]).length, 3);

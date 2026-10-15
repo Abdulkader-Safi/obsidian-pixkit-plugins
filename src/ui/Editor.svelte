@@ -14,7 +14,7 @@
 	import { PresetNameModal, SaveNameModal } from '../modals';
 	import { joinPath, parentPath, readBytes, writeBytes } from '../vault';
 	import { describeSwaps, type SwapResult } from '../relink';
-	import type ImageMagickPlugin from '../main';
+	import type PixkitPlugin from '../main';
 	import { icon } from './icon';
 	import PreviewCanvas from './PreviewCanvas.svelte';
 	import ResizePanel from './ResizePanel.svelte';
@@ -25,7 +25,7 @@
 	import FilesPanel from './FilesPanel.svelte';
 
 	interface Props {
-		plugin: ImageMagickPlugin;
+		plugin: PixkitPlugin;
 		files: TFile[];
 		/** The note the image was opened from. Saving swaps the image in it. */
 		note: TFile | null;
@@ -99,7 +99,7 @@
 	//
 	// Rotate and flip are done in CSS by PreviewCanvas, and format and quality
 	// never altered this image in the first place (the preview is always PNG), so
-	// none of those drags reach ImageMagick at all. That is what keeps the sliders
+	// none of those drags reach the engine at all. That is what keeps the sliders
 	// smooth: the engine runs on a synchronous thread shared with the UI.
 	$effect(() => {
 		const spec = resize ? { ...resize } : null;
@@ -295,7 +295,7 @@
 					swaps.push(await plugin.swapLinks(note, file, written));
 				} catch (err) {
 					failed++;
-					console.error(`[ImageMagick] failed on ${file.path}`, err);
+					console.error(`[Pixkit] failed on ${file.path}`, err);
 				}
 			}
 		} finally {
@@ -412,7 +412,7 @@
 				<CompressPanel bind:quality {format} />
 			{:else}
 				<p class="im-empty">
-					Drop an image into the preview, or run <b>ImageMagick: Open image</b> from
+					Drop an image into the preview, or run <b>Pixkit: Open image</b> from
 					the command palette.
 				</p>
 			{/if}
@@ -456,7 +456,7 @@
 		<span class="im-credit">
 			developed by
 			<a
-				href="https://abdulkadersafi.com/?utm_source=obsidian&utm_medium=plugin&utm_campaign=imagemagick"
+				href="https://abdulkadersafi.com/?utm_source=obsidian&utm_medium=plugin&utm_campaign=pixkit"
 				target="_blank"
 				rel="noopener noreferrer">Abdulkader Safi</a
 			>

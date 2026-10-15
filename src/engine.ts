@@ -119,7 +119,7 @@ function chainFor(bytes: Uint8Array, state: EditorState): SImgChain {
 		chain = chain.resize({
 			width: Math.max(1, Math.round(state.resize.width)),
 			height: Math.max(1, Math.round(state.resize.height)),
-			// Both edges are always supplied, so 'fill' matches ImageMagick's `!`:
+			// Both edges are always supplied, so 'fill' means
 			// exactly these dimensions, aspect ratio ignored. The lock lives in the UI.
 			fit: 'fill',
 		});
@@ -183,7 +183,7 @@ export async function encodePreset(
 ): Promise<Uint8Array> {
 	let chain = SImg.fromBuffer(bytes);
 	if (preset.maxLongEdge) {
-		// Shrink-only, aspect preserved: ImageMagick's `>`.
+		// Shrink-only, aspect preserved.
 		chain = chain.maxLongEdge(preset.maxLongEdge);
 	}
 	if (preset.stripMetadata) {

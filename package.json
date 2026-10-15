@@ -1,11 +1,11 @@
 {
-	"name": "image-magick",
+	"name": "pixkit",
 	"version": "2.3.0",
 	"description": "Resize, crop, rotate, compress and convert images inside Obsidian.",
 	"author": "Abdulkader Safi <safi.abdulkader@gmail.com> (https://abdulkadersafi.com)",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Abdulkader-Safi/obsidian-image-magick-plugins"
+		"url": "https://github.com/Abdulkader-Safi/obsidian-pixkit-plugins"
 	},
 	"main": "main.js",
 	"type": "module",
@@ -19,7 +19,6 @@
 	"keywords": [
 		"obsidian",
 		"obsidian-plugin",
-		"imagemagick",
 		"image",
 		"optimize",
 		"compress",
