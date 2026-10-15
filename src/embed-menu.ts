@@ -32,3 +32,15 @@ export function embeddedImageAt(
 	);
 	return image && isImageFile(image) ? { image, note } : null;
 }
+
+/** The images `note` embeds, each once, in the order they first appear. */
+export function imagesInNote(app: App, note: TFile): TFile[] {
+	const images = new Set<TFile>();
+	for (const embed of app.metadataCache.getFileCache(note)?.embeds ?? []) {
+		const file = app.metadataCache.getFirstLinkpathDest(getLinkpath(embed.link), note.path);
+		if (file && isImageFile(file)) {
+			images.add(file);
+		}
+	}
+	return [...images];
+}

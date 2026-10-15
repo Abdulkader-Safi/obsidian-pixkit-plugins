@@ -13,7 +13,7 @@ import type { OptimizePreset } from './engine';
 import { parsePresets, presetOutputPath, resolvePresets } from './presets';
 import { ImagePickerModal, PresetPickerModal } from './modals';
 import { ImageMagickSettingTab } from './settings';
-import { embeddedImageAt } from './embed-menu';
+import { embeddedImageAt, imagesInNote } from './embed-menu';
 import { describeSwaps, notesLinking, replaceLinks, type SwapResult } from './relink';
 import { isImageFile, readBytes, writeBytes } from './vault';
 import { EDITOR_VIEW_TYPE, EditorView } from './ui/EditorView';
@@ -64,8 +64,30 @@ export default class ImageMagickPlugin extends Plugin {
 			},
 		});
 
+		this.addCommand({
+			id: 'optimize-note-images',
+			name: 'Optimize images in current note',
+			checkCallback: (checking) =>
+				this.withNoteImages(checking, (images, note) => void this.openEditor(images, note)),
+		});
+
+		this.addCommand({
+			id: 'optimize-note-images-with-preset',
+			name: 'Optimize images in current note with preset',
+			checkCallback: (checking) =>
+				this.withNoteImages(checking, (images, note) => this.promptPreset(images, note)),
+		});
+
 		this.registerEvent(
 			this.app.workspace.on('file-menu', (menu, file, source) => {
+				// A note's own menu (file explorer, tab, more options) acts on the
+				// images it embeds. A link to a note inside another note does not.
+				if (file instanceof TFile && file.extension === 'md') {
+					if (source !== 'link-context-menu') {
+						this.addMenuItems(menu, imagesInNote(this.app, file), file);
+					}
+					return;
+				}
 				// An embed right-clicked in live preview: the note is the active file.
 				const active = this.app.workspace.getActiveFile();
 				const note =
@@ -188,8 +210,33 @@ export default class ImageMagickPlugin extends Plugin {
 		}).open();
 	}
 
+	/** The image open in the active tab, or else one picked from the vault. */
 	private pickImage(onPick: (file: TFile) => void): void {
+		const active = this.app.workspace.getActiveFile();
+		if (active && isImageFile(active)) {
+			onPick(active);
+			return;
+		}
 		new ImagePickerModal(this.app, onPick).open();
+	}
+
+	/**
+	 * For a command on the active note's images: available only when the active
+	 * note embeds at least one, so the palette hides it otherwise.
+	 */
+	private withNoteImages(
+		checking: boolean,
+		run: (images: TFile[], note: TFile) => void,
+	): boolean {
+		const note = this.app.workspace.getActiveFile();
+		const images = note?.extension === 'md' ? imagesInNote(this.app, note) : [];
+		if (!note || images.length === 0) {
+			return false;
+		}
+		if (!checking) {
+			run(images, note);
+		}
+		return true;
 	}
 
 	/** The images in a selection. A folder counts as every image under it, subfolders included. */
