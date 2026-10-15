@@ -23,8 +23,9 @@ By [Abdulkader Safi](https://abdulkadersafi.com).
 ## Usage
 
 1. **From the file explorer**: right-click any image, then **Optimize image** or **Optimize with preset**.
-2. **From the command palette**: **ImageMagick: Open image**, then pick a file.
-3. **Drag and drop**: open the view, then drag an image in from outside Obsidian.
+2. **From a note**: right-click an embedded image, in live preview or reading view. Saving swaps the new file into the note. To also move the old image to the trash, turn on **Delete the original after optimizing in a note** in the plugin settings. An image another note still links to is always kept.
+3. **From the command palette**: **ImageMagick: Open image**, then pick a file.
+4. **Drag and drop**: open the view, then drag an image in from outside Obsidian.
 
 ## Supported formats
 

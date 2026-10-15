@@ -8,6 +8,8 @@ export const EDITOR_VIEW_TYPE = 'imagemagick-editor';
 export class EditorView extends ItemView {
 	private component: ReturnType<typeof mount> | undefined;
 	private files: TFile[] = [];
+	/** The note the image was opened from, if any. Saving swaps the image in it. */
+	private note: TFile | null = null;
 
 	constructor(
 		leaf: WorkspaceLeaf,
@@ -29,8 +31,9 @@ export class EditorView extends ItemView {
 	}
 
 	/** Opens a new set of files. Remounts, so every edit starts from a clean pipeline. */
-	setFiles(files: TFile[]): void {
+	setFiles(files: TFile[], note: TFile | null = null): void {
 		this.files = files;
+		this.note = note;
 		this.remount();
 	}
 
@@ -46,7 +49,7 @@ export class EditorView extends ItemView {
 		this.destroy();
 		this.component = mount(Editor, {
 			target: this.contentEl,
-			props: { plugin: this.plugin, files: this.files },
+			props: { plugin: this.plugin, files: this.files, note: this.note },
 		});
 	}
 

@@ -44,6 +44,7 @@ beforeEach(() => {
 	plugin = {
 		saves: 0,
 		settings: {
+			trashOriginal: false,
 			presets: [
 				{
 					name: 'Web WebP',
@@ -72,7 +73,7 @@ function controls(t) {
 }
 
 test('the presets list is a list with add and delete affordances', () => {
-	const [group] = tab.getSettingDefinitions();
+	const group = tab.getSettingDefinitions().find((g) => g.type === 'list');
 	assert.equal(group.type, 'list');
 	assert.equal(group.heading, 'Presets');
 	assert.equal(typeof group.addItem.action, 'function');
@@ -160,7 +161,7 @@ test('suffix row hides when output overwrites the source', () => {
 });
 
 test('add and delete mutate the list and ask for a re-render', async () => {
-	const [group] = tab.getSettingDefinitions();
+	const group = tab.getSettingDefinitions().find((g) => g.type === 'list');
 	group.addItem.action();
 	await new Promise((r) => setImmediate(r));
 	assert.equal(plugin.settings.presets.length, 2);
@@ -189,4 +190,12 @@ test('a key for a deleted preset is ignored rather than throwing', async () => {
 	await tab.setControlValue('9.name', 'x');
 	await tab.setControlValue('nonsense', 'x');
 	assert.equal(plugin.settings.presets.length, 1, 'nothing was created');
+});
+
+test('the trash toggle reads and writes its flat key', async () => {
+	assert.equal(tab.getControlValue('trashOriginal'), false);
+	await tab.setControlValue('trashOriginal', true);
+	assert.equal(plugin.settings.trashOriginal, true);
+	assert.equal(plugin.saves, 1);
+	assert.equal(plugin.settings.presets.length, 1, 'presets untouched');
 });

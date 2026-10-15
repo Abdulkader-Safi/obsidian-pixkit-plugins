@@ -26,9 +26,11 @@
 	interface Props {
 		plugin: ImageMagickPlugin;
 		files: TFile[];
+		/** The note the image was opened from. Saving swaps the image in it. */
+		note: TFile | null;
 	}
 
-	let { plugin, files }: Props = $props();
+	let { plugin, files, note }: Props = $props();
 
 	// The view remounts this component for every new file set, so reading the
 	// props once at setup is exactly the intent.
@@ -260,6 +262,10 @@
 			const bytes = await service.encode(state);
 			const file = await writeBytes(app, path, bytes);
 			new Notice(`Saved ${file.path} (${Math.round(bytes.byteLength / 1024)} KB)`);
+			const from = files.find((f) => f.path === source?.path);
+			if (from) {
+				await plugin.replaceInNote(note, from, file);
+			}
 		} catch (err) {
 			errorMessage = describeError(err, 'Failed to save image');
 		} finally {

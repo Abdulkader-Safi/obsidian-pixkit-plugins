@@ -5,15 +5,21 @@ import { parsePresets, presetOutputPath, resolvePresets } from './presets';
 import { ImagePickerModal, PresetPickerModal } from './modals';
 import { ImageMagickSettingTab } from './settings';
 import { embeddedImageAt } from './embed-menu';
+import { replaceInNote } from './relink';
 import { isImageFile, readBytes, writeBytes } from './vault';
 import { EDITOR_VIEW_TYPE, EditorView } from './ui/EditorView';
 
 export interface ImageMagickSettings {
 	/** Empty means the three built-in presets are offered instead. */
 	presets: OptimizePreset[];
+	/** After optimizing from inside a note, trash the image the note used to show. */
+	trashOriginal: boolean;
 }
 
-export const DEFAULT_SETTINGS: ImageMagickSettings = { presets: [] };
+export const DEFAULT_SETTINGS: ImageMagickSettings = {
+	presets: [],
+	trashOriginal: false,
+};
 
 export default class ImageMagickPlugin extends Plugin {
 	settings: ImageMagickSettings = DEFAULT_SETTINGS;
@@ -47,8 +53,14 @@ export default class ImageMagickPlugin extends Plugin {
 		});
 
 		this.registerEvent(
-			this.app.workspace.on('file-menu', (menu, file) => {
-				this.addMenuItems(menu, this.imagesIn([file]));
+			this.app.workspace.on('file-menu', (menu, file, source) => {
+				// An embed right-clicked in live preview: the note is the active file.
+				const active = this.app.workspace.getActiveFile();
+				const note =
+					source === 'link-context-menu' && active?.extension === 'md'
+						? active
+						: null;
+				this.addMenuItems(menu, this.imagesIn([file]), note);
 			}),
 		);
 
@@ -61,13 +73,13 @@ export default class ImageMagickPlugin extends Plugin {
 		this.registerDomEvent(document, 'contextmenu', (evt) => {
 			// A prevented event already has a menu (live preview), which got our
 			// items through file-menu above.
-			const image = evt.defaultPrevented ? null : embeddedImageAt(this.app, evt);
-			if (!image) {
+			const hit = evt.defaultPrevented ? null : embeddedImageAt(this.app, evt);
+			if (!hit) {
 				return;
 			}
 			evt.preventDefault();
 			const menu = new Menu();
-			this.addMenuItems(menu, [image]);
+			this.addMenuItems(menu, [hit.image], hit.note);
 			menu.showAtMouseEvent(evt);
 		});
 
@@ -87,14 +99,24 @@ export default class ImageMagickPlugin extends Plugin {
 		new Notice(`Saved preset "${preset.name}".`);
 	}
 
-	async openEditor(files: TFile[]): Promise<void> {
+	/**
+	 * Swaps `from` for `to` in `note`, the note the image was optimized from.
+	 * Does nothing without a note, so the file explorer and palette are unchanged.
+	 */
+	async replaceInNote(note: TFile | null, from: TFile, to: TFile): Promise<void> {
+		if (note) {
+			await replaceInNote(this.app, note, from, to, this.settings.trashOriginal);
+		}
+	}
+
+	async openEditor(files: TFile[], note: TFile | null = null): Promise<void> {
 		const { workspace } = this.app;
 		const leaf =
 			workspace.getLeavesOfType(EDITOR_VIEW_TYPE)[0] ?? workspace.getLeaf('tab');
 		await leaf.setViewState({ type: EDITOR_VIEW_TYPE, active: true });
 		await workspace.revealLeaf(leaf);
 		if (leaf.view instanceof EditorView) {
-			leaf.view.setFiles(files);
+			leaf.view.setFiles(files, note);
 		}
 	}
 
@@ -102,7 +124,11 @@ export default class ImageMagickPlugin extends Plugin {
 	 * Runs `preset` over `files`, writing each output into the vault. The picker
 	 * is always shown first (see PresetPickerModal): this writes with no preview.
 	 */
-	private async runPreset(files: TFile[], preset: OptimizePreset): Promise<void> {
+	private async runPreset(
+		files: TFile[],
+		preset: OptimizePreset,
+		note: TFile | null,
+	): Promise<void> {
 		const notice = new Notice(`Optimizing with ${preset.name}…`, 0);
 		let saved = 0;
 		let failed = 0;
@@ -113,8 +139,13 @@ export default class ImageMagickPlugin extends Plugin {
 				);
 				try {
 					const out = await encodePreset(await readBytes(this.app, file), preset);
-					await writeBytes(this.app, presetOutputPath(file.path, preset), out);
+					const written = await writeBytes(
+						this.app,
+						presetOutputPath(file.path, preset),
+						out,
+					);
 					saved++;
+					await this.replaceInNote(note, file, written);
 				} catch (err) {
 					failed++;
 					console.error(`[ImageMagick] failed on ${file.path}`, err);
@@ -130,9 +161,9 @@ export default class ImageMagickPlugin extends Plugin {
 		);
 	}
 
-	private promptPreset(files: TFile[]): void {
+	private promptPreset(files: TFile[], note: TFile | null = null): void {
 		new PresetPickerModal(this.app, this.presets(), files.length, (preset) => {
-			void this.runPreset(files, preset);
+			void this.runPreset(files, preset, note);
 		}).open();
 	}
 
@@ -144,7 +175,7 @@ export default class ImageMagickPlugin extends Plugin {
 		return files.filter((f): f is TFile => f instanceof TFile && isImageFile(f));
 	}
 
-	private addMenuItems(menu: Menu, images: TFile[]): void {
+	private addMenuItems(menu: Menu, images: TFile[], note: TFile | null = null): void {
 		if (images.length === 0) {
 			return;
 		}
@@ -152,19 +183,22 @@ export default class ImageMagickPlugin extends Plugin {
 			item
 				.setTitle('Optimize image')
 				.setIcon('image')
-				.onClick(() => void this.openEditor(images)),
+				.onClick(() => void this.openEditor(images, note)),
 		);
 		menu.addItem((item) =>
 			item
 				.setTitle('Optimize with preset')
 				.setIcon('wand')
-				.onClick(() => this.promptPreset(images)),
+				.onClick(() => this.promptPreset(images, note)),
 		);
 	}
 
 	async loadSettings() {
 		const data = (await this.loadData()) as Partial<ImageMagickSettings> | null;
-		this.settings = { presets: parsePresets(data?.presets) };
+		this.settings = {
+			presets: parsePresets(data?.presets),
+			trashOriginal: data?.trashOriginal === true,
+		};
 	}
 
 	async saveSettings() {

@@ -24,6 +24,9 @@ const FORMAT_OPTIONS: Record<ImageFormat, string> = {
 	bmp: 'BMP',
 };
 
+/** The one control that is not part of a preset. */
+const TRASH_ORIGINAL = 'trashOriginal';
+
 /** The fields of a preset a control can address. */
 type Field = keyof OptimizePreset;
 
@@ -70,6 +73,11 @@ export class ImageMagickSettingTab extends PluginSettingTab {
 	getSettingDefinitions(): SettingDefinitionItem[] {
 		const presets = this.plugin.settings.presets;
 		return [
+			{
+				name: 'Delete the original after optimizing in a note',
+				desc: 'When you optimize an image from inside a note, the note switches to the new file. Turn this on to move the old one to the trash. It stays if another note still links to it.',
+				control: { type: 'toggle', key: TRASH_ORIGINAL },
+			},
 			{
 				type: 'list',
 				heading: 'Presets',
@@ -200,6 +208,9 @@ export class ImageMagickSettingTab extends PluginSettingTab {
 	 * be the obvious fit, but there would be no way to express "no limit".
 	 */
 	getControlValue(key: string): unknown {
+		if (key === TRASH_ORIGINAL) {
+			return this.plugin.settings.trashOriginal;
+		}
 		const parsed = parseKey(key);
 		const preset = parsed && this.plugin.settings.presets[parsed.index];
 		if (!parsed || !preset) {
@@ -215,6 +226,11 @@ export class ImageMagickSettingTab extends PluginSettingTab {
 
 	/** Writes one control's value back, validating exactly as the old rows did. */
 	async setControlValue(key: string, value: unknown): Promise<void> {
+		if (key === TRASH_ORIGINAL) {
+			this.plugin.settings.trashOriginal = value === true;
+			await this.plugin.saveSettings();
+			return;
+		}
 		const parsed = parseKey(key);
 		const preset = parsed && this.plugin.settings.presets[parsed.index];
 		if (!parsed || !preset) {

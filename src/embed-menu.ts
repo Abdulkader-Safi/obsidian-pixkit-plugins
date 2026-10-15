@@ -2,10 +2,14 @@ import { TFile, getLinkpath, type App } from 'obsidian';
 import { isImageFile } from './vault';
 
 /**
- * The vault image behind a right-clicked `![[embed]]` in reading view, or null.
- * Live preview needs none of this: Obsidian fires `file-menu` for its embeds.
+ * The vault image behind a right-clicked `![[embed]]` in reading view, and the
+ * note it sits in, or null. Live preview needs none of this: Obsidian fires
+ * `file-menu` for its embeds.
  */
-export function embeddedImageAt(app: App, evt: MouseEvent): TFile | null {
+export function embeddedImageAt(
+	app: App,
+	evt: MouseEvent,
+): { image: TFile; note: TFile | null } | null {
 	if (!(evt.target instanceof HTMLImageElement)) {
 		return null;
 	}
@@ -15,13 +19,16 @@ export function embeddedImageAt(app: App, evt: MouseEvent): TFile | null {
 		return null;
 	}
 	// Links resolve relative to the note they sit in, so find the note's leaf.
-	let sourcePath = '';
+	let note: TFile | null = null;
 	app.workspace.iterateAllLeaves((leaf) => {
 		const file = (leaf.view as { file?: TFile | null }).file;
 		if (file && leaf.view.containerEl.contains(embed)) {
-			sourcePath = file.path;
+			note = file;
 		}
 	});
-	const file = app.metadataCache.getFirstLinkpathDest(getLinkpath(linktext), sourcePath);
-	return file && isImageFile(file) ? file : null;
+	const image = app.metadataCache.getFirstLinkpathDest(
+		getLinkpath(linktext),
+		(note as TFile | null)?.path ?? '',
+	);
+	return image && isImageFile(image) ? { image, note } : null;
 }
