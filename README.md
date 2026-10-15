@@ -22,10 +22,17 @@ By [Abdulkader Safi](https://abdulkadersafi.com).
 
 ## Usage
 
-1. **From the file explorer**: right-click any image, then **Optimize image** or **Optimize with preset**.
-2. **From a note**: right-click an embedded image, in live preview or reading view. Saving swaps the new file into the note. To also move the old image to the trash, turn on **Delete the original after optimizing in a note** in the plugin settings. An image another note still links to is always kept.
+1. **From the file explorer**: right-click an image, a selection of images, or a folder (every image inside it, subfolders included), then **Optimize image** or **Optimize with preset**.
+2. **From a note**: right-click an embedded image, in live preview or reading view. Saving swaps the new file into the note.
 3. **From the command palette**: **ImageMagick: Open image**, then pick a file.
 4. **Drag and drop**: open the view, then drag an image in from outside Obsidian.
+
+### Keeping notes in sync
+
+Two settings decide what happens to your notes after an optimize:
+
+- **Update links in every note** switches every note that shows the image to the new file, wherever you optimized it from, including the file explorer and folders. With it off, only the note you optimized from changes.
+- **Delete the original after updating links** moves the old image to the trash once the notes point at the new file. An image that something still links to is always kept.
 
 ## Supported formats
 

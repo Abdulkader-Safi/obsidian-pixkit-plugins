@@ -13,6 +13,7 @@
 	import { presetOutputPath } from '../presets';
 	import { PresetNameModal, SaveNameModal } from '../modals';
 	import { joinPath, parentPath, readBytes, writeBytes } from '../vault';
+	import { describeSwaps, type SwapResult } from '../relink';
 	import type ImageMagickPlugin from '../main';
 	import { icon } from './icon';
 	import PreviewCanvas from './PreviewCanvas.svelte';
@@ -261,11 +262,12 @@
 		try {
 			const bytes = await service.encode(state);
 			const file = await writeBytes(app, path, bytes);
-			new Notice(`Saved ${file.path} (${Math.round(bytes.byteLength / 1024)} KB)`);
 			const from = files.find((f) => f.path === source?.path);
-			if (from) {
-				await plugin.replaceInNote(note, from, file);
-			}
+			const swap = from ? await plugin.swapLinks(note, from, file) : null;
+			new Notice(
+				`Saved ${file.path} (${Math.round(bytes.byteLength / 1024)} KB).` +
+					describeSwaps(swap ? [swap] : []),
+			);
 		} catch (err) {
 			errorMessage = describeError(err, 'Failed to save image');
 		} finally {
@@ -282,13 +284,15 @@
 		saving = true;
 		let saved = 0;
 		let failed = 0;
+		const swaps: SwapResult[] = [];
 		try {
 			for (const [i, file] of files.entries()) {
 				saveStatus = `Saving ${i + 1}/${files.length}: ${file.name}`;
 				try {
 					const bytes = await encodeBytes(await readBytes(app, file), state);
-					await writeBytes(app, outputNameFor(file.path, state), bytes);
+					const written = await writeBytes(app, outputNameFor(file.path, state), bytes);
 					saved++;
+					swaps.push(await plugin.swapLinks(note, file, written));
 				} catch (err) {
 					failed++;
 					console.error(`[ImageMagick] failed on ${file.path}`, err);
@@ -299,9 +303,10 @@
 			saveStatus = null;
 		}
 		new Notice(
-			failed === 0
+			(failed === 0
 				? `Optimized ${saved} image${saved === 1 ? '' : 's'}.`
-				: `Optimized ${saved}, ${failed} failed. See the console for details.`,
+				: `Optimized ${saved}, ${failed} failed. See the console for details.`) +
+				describeSwaps(swaps),
 		);
 	}
 
@@ -462,13 +467,15 @@
 		<button type="button" onclick={handleReset} disabled={!source || saving}>
 			Reset
 		</button>
+		<!-- With several files, Save all is the main action and this one says it
+		     only saves the file on screen. -->
 		<button
 			type="button"
-			class="mod-cta"
+			class:mod-cta={files.length < 2}
 			onclick={handleSave}
 			disabled={!source || saving}
 		>
-			{saving && files.length < 2 ? 'Saving…' : 'Save…'}
+			{saving && files.length < 2 ? 'Saving…' : files.length < 2 ? 'Save…' : 'Save this image…'}
 		</button>
 		{#if files.length > 1}
 			<button

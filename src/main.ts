@@ -1,23 +1,35 @@
-import { Menu, Notice, Plugin, TAbstractFile, TFile, WorkspaceLeaf } from 'obsidian';
+import {
+	Menu,
+	Notice,
+	Plugin,
+	TAbstractFile,
+	TFile,
+	TFolder,
+	Vault,
+	WorkspaceLeaf,
+} from 'obsidian';
 import { encodePreset } from './engine';
 import type { OptimizePreset } from './engine';
 import { parsePresets, presetOutputPath, resolvePresets } from './presets';
 import { ImagePickerModal, PresetPickerModal } from './modals';
 import { ImageMagickSettingTab } from './settings';
 import { embeddedImageAt } from './embed-menu';
-import { replaceInNote } from './relink';
+import { describeSwaps, notesLinking, replaceLinks, type SwapResult } from './relink';
 import { isImageFile, readBytes, writeBytes } from './vault';
 import { EDITOR_VIEW_TYPE, EditorView } from './ui/EditorView';
 
 export interface ImageMagickSettings {
 	/** Empty means the three built-in presets are offered instead. */
 	presets: OptimizePreset[];
-	/** After optimizing from inside a note, trash the image the note used to show. */
+	/** Optimizing from the file explorer also points every note at the new file. */
+	updateAllNotes: boolean;
+	/** After links are swapped, trash the original once nothing links to it. */
 	trashOriginal: boolean;
 }
 
 export const DEFAULT_SETTINGS: ImageMagickSettings = {
 	presets: [],
+	updateAllNotes: false,
 	trashOriginal: false,
 };
 
@@ -100,13 +112,20 @@ export default class ImageMagickPlugin extends Plugin {
 	}
 
 	/**
-	 * Swaps `from` for `to` in `note`, the note the image was optimized from.
-	 * Does nothing without a note, so the file explorer and palette are unchanged.
+	 * Points notes at `to` instead of `from` after an optimize. Which notes: every
+	 * one that links to `from` with **Update links in every note** on, otherwise
+	 * just `note`, the one it was optimized from. Neither means nothing changes.
 	 */
-	async replaceInNote(note: TFile | null, from: TFile, to: TFile): Promise<void> {
-		if (note) {
-			await replaceInNote(this.app, note, from, to, this.settings.trashOriginal);
+	async swapLinks(note: TFile | null, from: TFile, to: TFile): Promise<SwapResult> {
+		const notes = this.settings.updateAllNotes
+			? notesLinking(this.app, from)
+			: note
+				? [note]
+				: null;
+		if (!notes) {
+			return { notes: [], kept: false };
 		}
+		return replaceLinks(this.app, notes, from, to, this.settings.trashOriginal);
 	}
 
 	async openEditor(files: TFile[], note: TFile | null = null): Promise<void> {
@@ -132,6 +151,7 @@ export default class ImageMagickPlugin extends Plugin {
 		const notice = new Notice(`Optimizing with ${preset.name}…`, 0);
 		let saved = 0;
 		let failed = 0;
+		const swaps: SwapResult[] = [];
 		try {
 			for (const [i, file] of files.entries()) {
 				notice.setMessage(
@@ -145,7 +165,7 @@ export default class ImageMagickPlugin extends Plugin {
 						out,
 					);
 					saved++;
-					await this.replaceInNote(note, file, written);
+					swaps.push(await this.swapLinks(note, file, written));
 				} catch (err) {
 					failed++;
 					console.error(`[ImageMagick] failed on ${file.path}`, err);
@@ -155,9 +175,10 @@ export default class ImageMagickPlugin extends Plugin {
 			notice.hide();
 		}
 		new Notice(
-			failed === 0
+			(failed === 0
 				? `Optimized ${saved} image${saved === 1 ? '' : 's'}.`
-				: `Optimized ${saved}, ${failed} failed. See the console for details.`,
+				: `Optimized ${saved}, ${failed} failed. See the console for details.`) +
+				describeSwaps(swaps),
 		);
 	}
 
@@ -171,8 +192,23 @@ export default class ImageMagickPlugin extends Plugin {
 		new ImagePickerModal(this.app, onPick).open();
 	}
 
+	/** The images in a selection. A folder counts as every image under it, subfolders included. */
 	private imagesIn(files: TAbstractFile[]): TFile[] {
-		return files.filter((f): f is TFile => f instanceof TFile && isImageFile(f));
+		// A Set, so a folder selected along with a file inside it lists it once.
+		const images = new Set<TFile>();
+		const add = (f: TAbstractFile) => {
+			if (f instanceof TFile && isImageFile(f)) {
+				images.add(f);
+			}
+		};
+		for (const file of files) {
+			if (file instanceof TFolder) {
+				Vault.recurseChildren(file, add);
+			} else {
+				add(file);
+			}
+		}
+		return [...images];
 	}
 
 	private addMenuItems(menu: Menu, images: TFile[], note: TFile | null = null): void {
@@ -181,7 +217,9 @@ export default class ImageMagickPlugin extends Plugin {
 		}
 		menu.addItem((item) =>
 			item
-				.setTitle('Optimize image')
+				.setTitle(
+					images.length === 1 ? 'Optimize image' : `Optimize ${images.length} images`,
+				)
 				.setIcon('image')
 				.onClick(() => void this.openEditor(images, note)),
 		);
@@ -197,6 +235,7 @@ export default class ImageMagickPlugin extends Plugin {
 		const data = (await this.loadData()) as Partial<ImageMagickSettings> | null;
 		this.settings = {
 			presets: parsePresets(data?.presets),
+			updateAllNotes: data?.updateAllNotes === true,
 			trashOriginal: data?.trashOriginal === true,
 		};
 	}

@@ -44,6 +44,7 @@ beforeEach(() => {
 	plugin = {
 		saves: 0,
 		settings: {
+			updateAllNotes: false,
 			trashOriginal: false,
 			presets: [
 				{
@@ -192,10 +193,12 @@ test('a key for a deleted preset is ignored rather than throwing', async () => {
 	assert.equal(plugin.settings.presets.length, 1, 'nothing was created');
 });
 
-test('the trash toggle reads and writes its flat key', async () => {
+test('the on/off settings read and write their flat keys', async () => {
 	assert.equal(tab.getControlValue('trashOriginal'), false);
 	await tab.setControlValue('trashOriginal', true);
 	assert.equal(plugin.settings.trashOriginal, true);
-	assert.equal(plugin.saves, 1);
+	await tab.setControlValue('updateAllNotes', true);
+	assert.equal(plugin.settings.updateAllNotes, true);
+	assert.equal(plugin.saves, 2);
 	assert.equal(plugin.settings.presets.length, 1, 'presets untouched');
 });

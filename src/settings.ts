@@ -24,8 +24,13 @@ const FORMAT_OPTIONS: Record<ImageFormat, string> = {
 	bmp: 'BMP',
 };
 
-/** The one control that is not part of a preset. */
-const TRASH_ORIGINAL = 'trashOriginal';
+/** The controls that are plain on/off settings rather than part of a preset. */
+const FLAGS = ['updateAllNotes', 'trashOriginal'] as const;
+type Flag = (typeof FLAGS)[number];
+
+function isFlag(key: string): key is Flag {
+	return (FLAGS as readonly string[]).includes(key);
+}
 
 /** The fields of a preset a control can address. */
 type Field = keyof OptimizePreset;
@@ -74,9 +79,14 @@ export class ImageMagickSettingTab extends PluginSettingTab {
 		const presets = this.plugin.settings.presets;
 		return [
 			{
-				name: 'Delete the original after optimizing in a note',
-				desc: 'When you optimize an image from inside a note, the note switches to the new file. Turn this on to move the old one to the trash. It stays if another note still links to it.',
-				control: { type: 'toggle', key: TRASH_ORIGINAL },
+				name: 'Update links in every note',
+				desc: 'Optimizing an image from inside a note always switches that note to the new file. Turn this on to also switch every other note that shows it, including when you optimize from the file explorer or a folder.',
+				control: { type: 'toggle', key: 'updateAllNotes' },
+			},
+			{
+				name: 'Delete the original after updating links',
+				desc: 'Move the old image to the trash once the notes point at the new file. It stays if anything still links to it.',
+				control: { type: 'toggle', key: 'trashOriginal' },
 			},
 			{
 				type: 'list',
@@ -208,8 +218,8 @@ export class ImageMagickSettingTab extends PluginSettingTab {
 	 * be the obvious fit, but there would be no way to express "no limit".
 	 */
 	getControlValue(key: string): unknown {
-		if (key === TRASH_ORIGINAL) {
-			return this.plugin.settings.trashOriginal;
+		if (isFlag(key)) {
+			return this.plugin.settings[key];
 		}
 		const parsed = parseKey(key);
 		const preset = parsed && this.plugin.settings.presets[parsed.index];
@@ -226,8 +236,8 @@ export class ImageMagickSettingTab extends PluginSettingTab {
 
 	/** Writes one control's value back, validating exactly as the old rows did. */
 	async setControlValue(key: string, value: unknown): Promise<void> {
-		if (key === TRASH_ORIGINAL) {
-			this.plugin.settings.trashOriginal = value === true;
+		if (isFlag(key)) {
+			this.plugin.settings[key] = value === true;
 			await this.plugin.saveSettings();
 			return;
 		}
